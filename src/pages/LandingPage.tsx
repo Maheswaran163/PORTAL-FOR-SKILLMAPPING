@@ -41,7 +41,7 @@ const demoRadarData = [
 ];
 
 export const LandingPage: React.FC = () => {
-  const { switchRole } = useAuth();
+  
   const navigate = useNavigate();
   const [activeRoleTab, setActiveRoleTab] = useState<UserRole>('student');
 
