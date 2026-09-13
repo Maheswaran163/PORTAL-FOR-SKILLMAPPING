@@ -10,33 +10,21 @@ import {
   Menu,
   X,
   LogOut,
-  ChevronDown,
   Sparkles,
   FileCheck2,
   Layers,
   Search,
-  CheckCircle2,
   User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
 
 export const Navbar: React.FC = () => {
-  const { currentUser, currentRole, switchRole, logout } = useAuth();
+  const { currentUser, currentRole, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  const handleRoleSwitch = (role: UserRole) => {
-    switchRole(role);
-    setRoleDropdownOpen(false);
-    if (role === 'student') navigate('/student/dashboard');
-    else if (role === 'industry') navigate('/industry/dashboard');
-    else if (role === 'academician') navigate('/academician/dashboard');
-    else if (role === 'admin') navigate('/admin/dashboard');
-  };
 
   const getNavLinks = () => {
     if (!currentUser) {
@@ -98,6 +86,13 @@ export const Navbar: React.FC = () => {
     }
   };
 
+  const getProfilePath = () => {
+    if (currentRole === 'student') return '/student/profile';
+    if (currentRole === 'industry') return '/industry/dashboard';
+    if (currentRole === 'academician') return '/academician/dashboard';
+    return '/admin/dashboard';
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#D9C9B5]/70 transition-all">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -139,67 +134,21 @@ export const Navbar: React.FC = () => {
             })}
           </nav>
 
-          {/* Right Controls: Role Switcher & Auth */}
+          {/* Right Controls: Auth */}
           <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
             {currentUser ? (
               <>
-                {/* Role Switcher Pill */}
-                <div className="relative shrink-0">
-                  <button
-                    onClick={() => {
-                      setRoleDropdownOpen(!roleDropdownOpen);
-                      setUserDropdownOpen(false);
-                    }}
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-bg-alt/80 hover:bg-bg-alt border border-border text-xs font-semibold text-text shadow-xs transition-all"
-                  >
-                    <span className="text-text-muted text-[11px] hidden xl:inline">Role:</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(currentRole)}`}>
-                      {currentRole}
-                    </span>
-                    <ChevronDown className="w-3 h-3 text-text-muted" />
-                  </button>
+                {/* Role Badge (display only, no switcher) */}
+                <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(currentRole)}`}>
+                  {currentRole}
+                </span>
 
-                  <AnimatePresence>
-                    {roleDropdownOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-52 rounded-xl bg-surface border border-border shadow-soft-lg p-2 z-50"
-                      >
-                        <div className="px-3 py-1.5 text-[10px] font-bold text-text-muted border-b border-border mb-1 uppercase tracking-wider">
-                          Switch Demo Role
-                        </div>
-                        {(['student', 'industry', 'academician', 'admin'] as UserRole[]).map((role) => (
-                          <button
-                            key={role}
-                            onClick={() => handleRoleSwitch(role)}
-                            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs text-left capitalize transition-colors ${
-                              currentRole === role
-                                ? 'bg-primary/10 text-primary font-bold'
-                                : 'text-text hover:bg-bg-alt'
-                            }`}
-                          >
-                            <span className="flex items-center gap-2">
-                              <span className={`w-2 h-2 rounded-full ${currentRole === role ? 'bg-primary' : 'bg-border'}`} />
-                              {role} Portal
-                            </span>
-                            {currentRole === role && <CheckCircle2 className="w-3.5 h-3.5 text-primary" />}
-                          </button>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* User avatar & Explicit Log Out Button */}
+                {/* User avatar & dropdown */}
                 <div className="flex items-center gap-2 pl-2 border-l border-border shrink-0">
                   <div className="relative">
                     <button
                       onClick={() => {
                         setUserDropdownOpen(!userDropdownOpen);
-                        setRoleDropdownOpen(false);
                       }}
                       className="flex items-center gap-2 hover:opacity-90 transition-opacity"
                     >
@@ -237,7 +186,7 @@ export const Navbar: React.FC = () => {
                           </div>
 
                           <Link
-                            to="/student/profile"
+                            to={getProfilePath()}
                             onClick={() => setUserDropdownOpen(false)}
                             className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-text hover:bg-bg-alt font-medium"
                           >
@@ -249,6 +198,7 @@ export const Navbar: React.FC = () => {
                             onClick={() => {
                               setUserDropdownOpen(false);
                               logout();
+                              navigate('/login');
                             }}
                             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-error hover:bg-error/10 font-bold"
                           >
@@ -260,9 +210,12 @@ export const Navbar: React.FC = () => {
                     </AnimatePresence>
                   </div>
 
-                  {/* Prominent Explicit Log Out Button */}
+                  {/* Prominent Log Out Button */}
                   <button
-                    onClick={logout}
+                    onClick={() => {
+                      logout();
+                      navigate('/login');
+                    }}
                     title="Log Out of Platform"
                     className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-error/10 hover:bg-error text-error hover:text-surface font-semibold text-xs transition-all shadow-xs shrink-0"
                   >
@@ -340,33 +293,12 @@ export const Navbar: React.FC = () => {
               ))}
             </div>
 
-            {currentUser && (
-              <div className="pt-3 border-t border-border">
-                <p className="text-xs font-bold text-text-muted mb-2 uppercase">Switch Demo Role</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['student', 'industry', 'academician', 'admin'] as UserRole[]).map((role) => (
-                    <button
-                      key={role}
-                      onClick={() => {
-                        handleRoleSwitch(role);
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`px-3 py-2 rounded-lg text-xs font-semibold capitalize border text-center ${
-                        currentRole === role ? 'bg-primary text-surface border-primary' : 'bg-bg-alt border-border text-text'
-                      }`}
-                    >
-                      {role}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="pt-3 border-t border-border flex justify-between items-center">
               {currentUser ? (
                 <button
                   onClick={() => {
                     logout();
+                    navigate('/login');
                     setMobileMenuOpen(false);
                   }}
                   className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-error text-surface text-sm font-bold shadow-sm"

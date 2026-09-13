@@ -11,7 +11,6 @@ interface AuthContextType {
   login: (email: string, role: UserRole) => Promise<boolean>;
   signup: (name: string, email: string, role: UserRole, organization: string) => Promise<boolean>;
   logout: () => void;
-  switchRole: (role: UserRole) => void;
   refreshUserData: () => void;
 }
 
@@ -33,9 +32,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const user = storageService.getCurrentUser();
     setCurrentUser(user);
     if (user) {
-      setStudentProfile(storageService.getStudentProfile(user.id) || storageService.getStudentProfiles()[0]);
-      setIndustryProfile(storageService.getIndustryProfile(user.id) || storageService.getIndustryProfiles()[0]);
-      setAcademicianProfile(storageService.getAcademicianProfile(user.id) || storageService.getAcademicianProfiles()[0]);
+      setStudentProfile(storageService.getStudentProfile(user.id));
+      setIndustryProfile(storageService.getIndustryProfile(user.id));
+      setAcademicianProfile(storageService.getAcademicianProfile(user.id));
     } else {
       setStudentProfile(undefined);
       setIndustryProfile(undefined);
@@ -56,20 +55,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
   }, []);
 
-  const login = async (email: string, role: UserRole): Promise<boolean> => {
+  /**
+   * Login: strictly matches by email.
+   * Returns false if no matching account found.
+   */
+  const login = async (email: string, _role: UserRole): Promise<boolean> => {
     const users = storageService.getUsers();
-    let user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+
     if (!user) {
-      // Find default user of this role or create one
-      user = users.find(u => u.role === role) || {
-        id: `user-${role}-${Date.now()}`,
-        name: email.split('@')[0],
-        email,
-        role,
-        createdAt: new Date().toISOString(),
-      };
-      storageService.addUser(user);
+      return false;
     }
 
     storageService.setCurrentUser(user);
@@ -77,7 +72,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  /**
+   * Signup: creates a brand new user with a blank profile.
+   * Does NOT copy from any mock/seed profile.
+   */
   const signup = async (name: string, email: string, role: UserRole, organization: string): Promise<boolean> => {
+    const users = storageService.getUsers();
+    const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (existing) {
+      throw new Error('An account with this email already exists. Please sign in.');
+    }
+
     const newUser: User = {
       id: `user-${role}-${Date.now()}`,
       name,
@@ -89,30 +94,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     storageService.addUser(newUser);
 
+    // Create a fresh, minimal profile — do NOT copy seed data
     if (role === 'student') {
-      const defaultStudent = storageService.getStudentProfiles()[0];
       storageService.updateStudentProfile({
-        ...defaultStudent,
         userId: newUser.id,
         fullName: name,
         email,
         institution: organization,
+        branch: '',
+        year: '1st Year',
+        bio: '',
+        skills: [],
+        portfolioProjects: [],
+        certifications: [],
+        targetRoles: [],
+        linkedinUrl: '',
+        githubUrl: '',
       });
     } else if (role === 'industry') {
-      const defaultInd = storageService.getIndustryProfiles()[0];
       storageService.updateIndustryProfile({
-        ...defaultInd,
         userId: newUser.id,
         companyName: organization || name,
         contactEmail: email,
+        industryType: '',
+        description: '',
+        website: '',
+        location: '',
+        verified: false,
       });
     } else if (role === 'academician') {
-      const defaultAcad = storageService.getAcademicianProfiles()[0];
       storageService.updateAcademicianProfile({
-        ...defaultAcad,
         userId: newUser.id,
         fullName: name,
         institution: organization,
+        department: '',
+        designation: '',
+        bio: '',
+        researchAreas: [],
+        experienceYears: 0,
+        publicationsCount: 0,
       });
     }
 
@@ -123,12 +143,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     storageService.setCurrentUser(null);
-    refreshUserData();
-  };
-
-  const switchRole = (role: UserRole) => {
-    const user = storageService.switchUserByRole(role);
-    setCurrentUser(user);
     refreshUserData();
   };
 
@@ -145,7 +159,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         login,
         signup,
         logout,
-        switchRole,
         refreshUserData,
       }}
     >

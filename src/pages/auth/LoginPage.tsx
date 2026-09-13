@@ -9,14 +9,17 @@ import {
   Lock,
   Mail,
   ArrowRight,
-  Sparkles,
-  CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
+
+const ROLE_TABS: { r: UserRole; label: string; icon: React.ElementType; description: string }[] = [
+  { r: 'student', label: 'Student', icon: GraduationCap, description: 'Access your skill dashboard & opportunities' },
+  { r: 'industry', label: 'Industry Partner', icon: Briefcase, description: 'Post jobs, track talent & programs' },
+  { r: 'academician', label: 'Faculty / Dept', icon: BookOpen, description: 'Manage FDPs, grants & analytics' },
+  { r: 'admin', label: 'Administrator', icon: ShieldCheck, description: 'Platform management & moderation' },
+];
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
@@ -25,33 +28,16 @@ export const LoginPage: React.FC = () => {
   const initialRole: UserRole = (location.state as any)?.targetRole || 'student';
 
   const [role, setRole] = useState<UserRole>(initialRole);
-  const [email, setEmail] = useState(() => {
-    if (initialRole === 'industry') return 'campus-relations@google.com';
-    if (initialRole === 'academician') return 'ramesh.cs@iitm.ac.in';
-    if (initialRole === 'admin') return 'admin@skillbridge.gov.in';
-    return 'aarav.sharma@student.edu';
-  });
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Handle role change and update default demo credentials
   const handleRoleChange = (newRole: UserRole) => {
     setRole(newRole);
     setError('');
-    if (newRole === 'student') {
-      setEmail('aarav.sharma@student.edu');
-      setPassword('password123');
-    } else if (newRole === 'industry') {
-      setEmail('campus-relations@google.com');
-      setPassword('password123');
-    } else if (newRole === 'academician') {
-      setEmail('ramesh.cs@iitm.ac.in');
-      setPassword('password123');
-    } else if (newRole === 'admin') {
-      setEmail('admin@skillbridge.gov.in');
-      setPassword('password123');
-    }
+    setEmail('');
+    setPassword('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,17 +46,12 @@ export const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // If Firebase Auth is available and live credentials provided, attempt Firebase sign-in
-      if (auth && import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_API_KEY !== 'demo-api-key') {
-        try {
-          await signInWithEmailAndPassword(auth, email, password);
-        } catch (firebaseErr: any) {
-          // If demo user or offline, gracefully fallback to local auth
-          console.warn('Firebase Auth notice (falling back to platform identity):', firebaseErr.message);
-        }
+      const success = await login(email, role);
+      if (!success) {
+        setError('Invalid email or password. Please check your credentials.');
+        setLoading(false);
+        return;
       }
-
-      await login(email, role);
 
       // Navigate to destination or role dashboard
       const from = (location.state as any)?.from?.pathname;
@@ -86,67 +67,42 @@ export const LoginPage: React.FC = () => {
         navigate('/admin/dashboard', { replace: true });
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed. Please verify credentials.');
+      setError(err.message || 'Authentication failed. Please verify your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleQuickLogin = async (targetRole: UserRole) => {
-    handleRoleChange(targetRole);
-    setLoading(true);
-    try {
-      const demoEmail =
-        targetRole === 'student'
-          ? 'aarav.sharma@student.edu'
-          : targetRole === 'industry'
-          ? 'campus-relations@google.com'
-          : targetRole === 'academician'
-          ? 'ramesh.cs@iitm.ac.in'
-          : 'admin@skillbridge.gov.in';
-
-      await login(demoEmail, targetRole);
-
-      if (targetRole === 'student') navigate('/student/dashboard');
-      else if (targetRole === 'industry') navigate('/industry/dashboard');
-      else if (targetRole === 'academician') navigate('/academician/dashboard');
-      else if (targetRole === 'admin') navigate('/admin/dashboard');
-    } catch (err: any) {
-      setError('Quick login failed.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const selectedTab = ROLE_TABS.find(t => t.r === role)!;
 
   return (
     <div className="min-h-[88vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-bg">
-      <div className="max-w-md w-full space-y-8 bg-surface p-8 sm:p-10 rounded-3xl border border-border shadow-soft-lg">
-        
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+        className="max-w-md w-full space-y-7 bg-surface p-8 sm:p-10 rounded-3xl border border-border shadow-soft-lg"
+      >
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-surface shadow-md mx-auto">
-            <GraduationCap className="w-6 h-6 text-[#FFFDF9]" />
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-surface shadow-md mx-auto">
+            <GraduationCap className="w-7 h-7 text-[#FFFDF9]" />
           </div>
-          <h2 className="font-serif text-3xl font-bold text-primary-dark">
-            Portal Sign In
-          </h2>
+          <h1 className="font-serif text-3xl font-bold text-primary-dark">
+            Welcome Back
+          </h1>
           <p className="text-xs text-text-muted">
-            Select your account role to access your personalized collaboration space.
+            Sign in to your SkillBridge account
           </p>
         </div>
 
         {/* Role Picker Tabs */}
-        <div className="space-y-1.5">
-          <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider text-center">
-            Step 1: Choose Your Role
+        <div className="space-y-2">
+          <label className="block text-[11px] font-bold text-text-muted uppercase tracking-wider">
+            I am a...
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {[
-              { r: 'student' as UserRole, label: 'Student', icon: GraduationCap },
-              { r: 'industry' as UserRole, label: 'Industry Partner', icon: Briefcase },
-              { r: 'academician' as UserRole, label: 'Faculty / Dept', icon: BookOpen },
-              { r: 'admin' as UserRole, label: 'Administrator', icon: ShieldCheck },
-            ].map(tab => (
+            {ROLE_TABS.map(tab => (
               <button
                 key={tab.r}
                 type="button"
@@ -157,29 +113,14 @@ export const LoginPage: React.FC = () => {
                     : 'bg-bg-alt/70 text-text border-border hover:bg-bg-alt'
                 }`}
               >
-                <tab.icon className={`w-4 h-4 ${role === tab.r ? 'text-surface' : 'text-accent'}`} />
+                <tab.icon className={`w-4 h-4 shrink-0 ${role === tab.r ? 'text-surface' : 'text-accent'}`} />
                 <span>{tab.label}</span>
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Quick 1-Click Demo Login */}
-        <div className="p-3 bg-bg-alt/60 rounded-2xl border border-border space-y-2">
-          <div className="flex items-center justify-between text-xs">
-            <span className="font-bold text-primary flex items-center gap-1">
-              <Sparkles className="w-3.5 h-3.5 text-accent" /> One-Click Demo Access
-            </span>
-            <span className="text-[10px] text-text-muted">Pre-filled profiles</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => handleQuickLogin(role)}
-            className="w-full py-2 px-3 rounded-xl bg-surface hover:bg-primary hover:text-surface text-primary border border-border text-xs font-bold transition-all flex items-center justify-center gap-2 shadow-xs"
-          >
-            <span>Sign In as Demo {role.toUpperCase()}</span>
-            <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
-          </button>
+          {selectedTab && (
+            <p className="text-[10px] text-text-muted text-center pt-1">{selectedTab.description}</p>
+          )}
         </div>
 
         {error && (
@@ -234,21 +175,20 @@ export const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-surface font-semibold text-xs shadow-sm transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-surface font-semibold text-xs shadow-sm transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
           >
-            <span>{loading ? 'Signing In...' : `Sign In to ${role.toUpperCase()} Portal`}</span>
+            <span>{loading ? 'Signing In...' : `Sign In to ${role.charAt(0).toUpperCase() + role.slice(1)} Portal`}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>
 
-        <div className="text-center pt-2 text-xs text-text-muted">
-          New to SkillBridge?{' '}
+        <div className="text-center pt-1 text-xs text-text-muted">
+          Don't have an account?{' '}
           <Link to="/signup" className="font-bold text-primary hover:underline">
-            Create an Account for Any Role
+            Register Here
           </Link>
         </div>
-
-      </div>
+      </motion.div>
     </div>
   );
 };
