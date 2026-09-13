@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && request.auth.token.role == role;
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    // User Profiles
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isAdmin();
+    }
+    
+    match /studentProfiles/{userId} {
+      allow read: if true; // Public verified portfolio view
+      allow write: if isOwner(userId) || isAdmin();
+    }
+
+    match /industryProfiles/{userId} {
+      allow read: if true;
+      allow write: if (isOwner(userId) && hasRole('industry')) || isAdmin();
+    }
+
+    match /academicianProfiles/{userId} {
+      allow read: if true;
+      allow write: if (isOwner(userId) && hasRole('academician')) || isAdmin();
+    }
+
+    // Postings (Internships & Jobs)
+    match /postings/{postingId} {
+      allow read: if true;
+      allow create, update, delete: if hasRole('industry') || isAdmin();
+    }
+
+    // Applications
+    match /applications/{applicationId} {
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        hasRole('industry') ||
+        isAdmin()
+      );
+      allow create: if hasRole('student');
+      allow update: if hasRole('industry') || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Learning Programs & Enrollments
+    match /learningPrograms/{programId} {
+      allow read: if true;
+      allow write: if hasRole('industry') || isAdmin();
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow read: if isAuthenticated() && (
+        resource.data.studentId == request.auth.uid ||
+        hasRole('industry') ||
+        isAdmin()
+      );
+      allow create, update: if isAuthenticated();
+    }
+
+    // Academic Opportunities (FDPs, Consultancy, Grants)
+    match /academicOpportunities/{opportunityId} {
+      allow read: if true;
+      allow write: if hasRole('industry') || hasRole('academician') || isAdmin();
+    }
+
+    match /academicApplications/{appId} {
+      allow read: if isAuthenticated();
+      allow create: if hasRole('academician');
+      allow update, delete: if hasRole('industry') || isAdmin();
+    }
+
+    // RAG Knowledge Base & Vectors
+    match /knowledgeBase/{kbId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Chat Sessions
+    match /chatSessions/{sessionId} {
+      allow read, write: if isAuthenticated();
+      match /messages/{messageId} {
+        allow read, write: if isAuthenticated();
+      }
+    }
+  }
+}
