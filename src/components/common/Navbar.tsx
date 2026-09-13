@@ -16,6 +16,7 @@ import {
   Layers,
   Search,
   CheckCircle2,
+  User as UserIcon,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
@@ -24,6 +25,7 @@ export const Navbar: React.FC = () => {
   const { currentUser, currentRole, switchRole, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -50,24 +52,24 @@ export const Navbar: React.FC = () => {
       case 'student':
         return [
           { label: 'Dashboard', path: '/student/dashboard', icon: Layers },
-          { label: 'Diagnostic Assessment', path: '/student/assessment', icon: Sparkles },
+          { label: 'Assessment', path: '/student/assessment', icon: Sparkles },
           { label: 'Opportunities', path: '/student/opportunities', icon: Search },
-          { label: 'Learning Programs', path: '/student/learning', icon: BookOpen },
+          { label: 'Learning', path: '/student/learning', icon: BookOpen },
           { label: 'Applications', path: '/student/applications', icon: Briefcase },
-          { label: 'Digital Portfolio', path: '/student/portfolio', icon: FileCheck2 },
+          { label: 'Portfolio', path: '/student/portfolio', icon: FileCheck2 },
         ];
       case 'industry':
         return [
           { label: 'Dashboard', path: '/industry/dashboard', icon: Layers },
           { label: 'Postings & Jobs', path: '/industry/postings', icon: Briefcase },
           { label: 'Training & FDPs', path: '/industry/programs', icon: BookOpen },
-          { label: 'Hiring Analytics', path: '/industry/analytics', icon: Sparkles },
+          { label: 'Analytics', path: '/industry/analytics', icon: Sparkles },
         ];
       case 'academician':
         return [
           { label: 'Dashboard', path: '/academician/dashboard', icon: Layers },
-          { label: 'FDPs & Research Grants', path: '/academician/opportunities', icon: GraduationCap },
-          { label: 'Dept Skill Analytics', path: '/academician/analytics', icon: Sparkles },
+          { label: 'FDPs & Grants', path: '/academician/opportunities', icon: GraduationCap },
+          { label: 'Dept Analytics', path: '/academician/analytics', icon: Sparkles },
         ];
       case 'admin':
         return [
@@ -97,61 +99,64 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#FFFDF9]/90 backdrop-blur-md border-b border-[#D9C9B5]/70 transition-all">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
+    <header className="sticky top-0 z-40 w-full bg-[#FFFDF9]/95 backdrop-blur-md border-b border-[#D9C9B5]/70 transition-all">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20 gap-2">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-surface shadow-md group-hover:scale-105 transition-transform duration-200">
-              <GraduationCap className="w-6 h-6 text-[#FFFDF9]" />
+          <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center text-surface shadow-md group-hover:scale-105 transition-transform duration-200">
+              <GraduationCap className="w-5 h-5 text-[#FFFDF9]" />
             </div>
-            <div>
-              <span className="font-serif text-2xl font-bold tracking-tight text-primary-dark block leading-none">
+            <div className="hidden sm:block">
+              <span className="font-serif text-xl font-bold tracking-tight text-primary-dark block leading-none">
                 SkillBridge
               </span>
-              <span className="text-[10px] tracking-wider uppercase font-semibold text-accent block mt-1">
+              <span className="text-[9px] tracking-wider uppercase font-semibold text-accent block mt-0.5">
                 Academia • Industry • AI
               </span>
             </div>
           </Link>
 
           {/* Desktop Navigation Links */}
-          <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+          <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 overflow-x-auto scrollbar-none">
             {navLinks.map((link) => {
               const isActive = location.pathname === link.path;
               return (
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 flex items-center gap-1.5 ${
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 flex items-center gap-1.5 shrink-0 ${
                     isActive
-                      ? 'bg-primary text-surface shadow-sm font-semibold'
+                      ? 'bg-primary text-surface shadow-sm font-bold'
                       : 'text-text hover:text-primary hover:bg-bg-alt/60'
                   }`}
                 >
-                  {link.icon && <link.icon className={`w-4 h-4 ${isActive ? 'text-surface' : 'text-accent'}`} />}
-                  {link.label}
+                  {link.icon && <link.icon className={`w-3.5 h-3.5 ${isActive ? 'text-surface' : 'text-accent'}`} />}
+                  <span>{link.label}</span>
                 </Link>
               );
             })}
           </nav>
 
           {/* Right Controls: Role Switcher & Auth */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-2 lg:gap-3 shrink-0">
             {currentUser ? (
               <>
                 {/* Role Switcher Pill */}
-                <div className="relative">
+                <div className="relative shrink-0">
                   <button
-                    onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-bg-alt/80 hover:bg-bg-alt border border-border text-xs font-semibold text-text shadow-sm transition-all"
+                    onClick={() => {
+                      setRoleDropdownOpen(!roleDropdownOpen);
+                      setUserDropdownOpen(false);
+                    }}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-bg-alt/80 hover:bg-bg-alt border border-border text-xs font-semibold text-text shadow-xs transition-all"
                   >
-                    <span className="text-text-muted">Role:</span>
-                    <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(currentRole)}`}>
+                    <span className="text-text-muted text-[11px] hidden xl:inline">Role:</span>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getRoleBadgeColor(currentRole)}`}>
                       {currentRole}
                     </span>
-                    <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
+                    <ChevronDown className="w-3 h-3 text-text-muted" />
                   </button>
 
                   <AnimatePresence>
@@ -161,9 +166,9 @@ export const Navbar: React.FC = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 8, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute right-0 mt-2 w-56 rounded-xl bg-surface border border-border shadow-soft-lg p-2 z-50"
+                        className="absolute right-0 mt-2 w-52 rounded-xl bg-surface border border-border shadow-soft-lg p-2 z-50"
                       >
-                        <div className="px-3 py-2 text-[11px] font-semibold text-text-muted border-b border-border mb-1 uppercase tracking-wider">
+                        <div className="px-3 py-1.5 text-[10px] font-bold text-text-muted border-b border-border mb-1 uppercase tracking-wider">
                           Switch Demo Role
                         </div>
                         {(['student', 'industry', 'academician', 'admin'] as UserRole[]).map((role) => (
@@ -188,44 +193,95 @@ export const Navbar: React.FC = () => {
                   </AnimatePresence>
                 </div>
 
-                {/* User avatar & Logout */}
-                <div className="flex items-center gap-2 pl-2 border-l border-border">
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-primary-dark truncate max-w-[120px]">{currentUser.name}</p>
-                    <p className="text-[10px] text-text-muted capitalize">{currentUser.role}</p>
-                  </div>
-                  {currentUser.avatarUrl ? (
-                    <img
-                      src={currentUser.avatarUrl}
-                      alt={currentUser.name}
-                      className="w-9 h-9 rounded-full object-cover border-2 border-primary/40 shadow-sm"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary text-surface flex items-center justify-center font-bold text-xs">
-                      {currentUser.name.charAt(0)}
-                    </div>
-                  )}
+                {/* User avatar & Explicit Log Out Button */}
+                <div className="flex items-center gap-2 pl-2 border-l border-border shrink-0">
+                  <div className="relative">
+                    <button
+                      onClick={() => {
+                        setUserDropdownOpen(!userDropdownOpen);
+                        setRoleDropdownOpen(false);
+                      }}
+                      className="flex items-center gap-2 hover:opacity-90 transition-opacity"
+                    >
+                      <div className="text-right hidden sm:block">
+                        <p className="text-xs font-bold text-primary-dark truncate max-w-[90px] lg:max-w-[120px]">
+                          {currentUser.name}
+                        </p>
+                        <p className="text-[10px] text-text-muted capitalize">{currentUser.role}</p>
+                      </div>
+                      {currentUser.avatarUrl ? (
+                        <img
+                          src={currentUser.avatarUrl}
+                          alt={currentUser.name}
+                          className="w-8 h-8 rounded-full object-cover border-2 border-primary/40 shadow-xs"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-primary text-surface flex items-center justify-center font-bold text-xs">
+                          {currentUser.name.charAt(0)}
+                        </div>
+                      )}
+                    </button>
 
+                    <AnimatePresence>
+                      {userDropdownOpen && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 mt-2 w-48 rounded-xl bg-surface border border-border shadow-soft-lg p-2 z-50 space-y-1"
+                        >
+                          <div className="px-3 py-2 border-b border-border mb-1">
+                            <p className="font-bold text-xs text-primary-dark truncate">{currentUser.name}</p>
+                            <p className="text-[10px] text-text-muted truncate">{currentUser.email}</p>
+                          </div>
+
+                          <Link
+                            to="/student/profile"
+                            onClick={() => setUserDropdownOpen(false)}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-text hover:bg-bg-alt font-medium"
+                          >
+                            <UserIcon className="w-3.5 h-3.5 text-accent" />
+                            <span>My Profile</span>
+                          </Link>
+
+                          <button
+                            onClick={() => {
+                              setUserDropdownOpen(false);
+                              logout();
+                            }}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-error hover:bg-error/10 font-bold"
+                          >
+                            <LogOut className="w-3.5 h-3.5" />
+                            <span>Log Out</span>
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Prominent Explicit Log Out Button */}
                   <button
                     onClick={logout}
-                    title="Sign Out"
-                    className="p-2 rounded-lg text-text-muted hover:text-error hover:bg-error/10 transition-colors"
+                    title="Log Out of Platform"
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-error/10 hover:bg-error text-error hover:text-surface font-semibold text-xs transition-all shadow-xs shrink-0"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span className="hidden lg:inline font-bold">Log Out</span>
                   </button>
                 </div>
               </>
             ) : (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 shrink-0">
                 <Link
                   to="/login"
-                  className="px-4 py-2 rounded-lg text-sm font-semibold text-primary hover:bg-bg-alt transition-colors"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-primary hover:bg-bg-alt transition-colors"
                 >
                   Log In
                 </Link>
                 <Link
                   to="/signup"
-                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-primary hover:bg-primary-hover text-surface shadow-sm transition-colors"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-primary hover:bg-primary-hover text-surface shadow-sm transition-colors"
                 >
                   Get Started
                 </Link>
@@ -234,7 +290,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile menu trigger */}
-          <div className="flex items-center gap-2 md:hidden">
+          <div className="flex items-center gap-2 md:hidden shrink-0">
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               className="p-2 rounded-lg text-text hover:bg-bg-alt transition-colors"
@@ -313,9 +369,9 @@ export const Navbar: React.FC = () => {
                     logout();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-error/10 text-error text-sm font-semibold"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-error text-surface text-sm font-bold shadow-sm"
                 >
-                  <LogOut className="w-4 h-4" /> Sign Out
+                  <LogOut className="w-4 h-4" /> Log Out
                 </button>
               ) : (
                 <div className="grid grid-cols-2 gap-3 w-full">
